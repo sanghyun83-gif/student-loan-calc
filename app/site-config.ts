@@ -14,7 +14,7 @@ export const SITE = {
     tagline: "Free 2025 Student Loan Tools",
     description: "Calculate your student loan payments, refinancing savings, and repayment options. See PSLF eligibility, IDR plans, and loan forgiveness timelines.",
     year: 2025,
-    baseUrl: "https://student-loan-calc.vercel.app",
+    baseUrl: "https://student-loan.mysmartcalculators.com",
 };
 
 // ============================================
@@ -213,11 +213,11 @@ export function calculateLoanPayment(
 ): LoanPaymentResult {
     const monthlyRate = interestRate / 100 / 12;
     const numPayments = loanTermYears * 12;
-    
-    const monthlyPayment = loanBalance * 
+
+    const monthlyPayment = loanBalance *
         (monthlyRate * Math.pow(1 + monthlyRate, numPayments)) /
         (Math.pow(1 + monthlyRate, numPayments) - 1);
-    
+
     const totalPayment = monthlyPayment * numPayments;
     const totalInterest = totalPayment - loanBalance;
 
@@ -252,7 +252,7 @@ export function calculatePayoff(
     extraPayment: number
 ): PayoffResult {
     const monthlyRate = interestRate / 100 / 12;
-    
+
     // Original payoff without extra
     let balance = loanBalance;
     let originalMonths = 0;
@@ -263,7 +263,7 @@ export function calculatePayoff(
         balance = balance + interest - monthlyPayment;
         originalMonths++;
     }
-    
+
     // New payoff with extra
     balance = loanBalance;
     let newMonths = 0;
@@ -275,7 +275,7 @@ export function calculatePayoff(
         balance = balance + interest - totalPayment;
         newMonths++;
     }
-    
+
     const payoffDate = new Date();
     payoffDate.setMonth(payoffDate.getMonth() + newMonths);
 
@@ -312,7 +312,7 @@ export function calculateRefinance(
 ): RefinanceResult {
     const current = calculateLoanPayment(loanBalance, currentRate, 10);
     const refinanced = calculateLoanPayment(loanBalance, newRate, newTermYears);
-    
+
     const monthlySavings = current.monthlyPayment - refinanced.monthlyPayment;
     const totalSavings = current.totalInterest - refinanced.totalInterest;
     const breakEvenMonths = totalSavings > 0 ? 0 : Math.ceil(Math.abs(totalSavings) / Math.abs(monthlySavings));
@@ -351,28 +351,28 @@ export function calculateIDR(
 ): IDRResult {
     const { idrPlans, povertyGuidelines } = STUDENT_LOAN_CONSTANTS;
     const selectedPlan = idrPlans[plan];
-    
+
     // Calculate poverty line for family size
-    const povertyLine = povertyGuidelines.baseAmount + 
+    const povertyLine = povertyGuidelines.baseAmount +
         (familySize - 1) * povertyGuidelines.perAdditionalPerson;
-    
+
     // Calculate protected income (varies by plan)
     const povertyMultiplier = plan === 'save' ? 225 : 150;
     const protectedIncome = povertyLine * (povertyMultiplier / 100);
-    
+
     // Discretionary income
     const discretionaryIncome = Math.max(0, annualIncome - protectedIncome);
-    
+
     // Income percentage (SAVE uses 5% for undergrad only)
     let incomePercent = selectedPlan.incomePercent;
     if (plan === 'save' && isUndergrad) {
         incomePercent = idrPlans.save.undergradPercent;
     }
-    
+
     // Monthly payment
     const annualPayment = (discretionaryIncome * incomePercent) / 100;
     const monthlyPayment = Math.round(annualPayment / 12);
-    
+
     // Forgiveness timeline
     let forgivenessYears = 20;
     if (plan === 'save') {
@@ -381,7 +381,7 @@ export function calculateIDR(
     } else if (plan === 'icr') {
         forgivenessYears = 25;
     }
-    
+
     const totalPayments = monthlyPayment * forgivenessYears * 12;
     const estimatedForgiveness = Math.max(0, loanBalance - totalPayments + (loanBalance * 0.05 * forgivenessYears));
 
@@ -417,13 +417,13 @@ export function calculatePSLF(
 ): PSLFResult {
     const { pslf } = STUDENT_LOAN_CONSTANTS;
     const idrResult = calculateIDR(loanBalance, annualIncome, familySize, 'save', true);
-    
+
     const paymentsRemaining = Math.max(0, pslf.requiredPayments - paymentsMade);
     const monthsRemaining = paymentsRemaining;
-    
+
     const forgivenessDate = new Date();
     forgivenessDate.setMonth(forgivenessDate.getMonth() + monthsRemaining);
-    
+
     const totalPaymentsRemaining = idrResult.monthlyPayment * paymentsRemaining;
     const interestAccrued = loanBalance * 0.05 * (monthsRemaining / 12);
     const estimatedForgiveness = loanBalance + interestAccrued - totalPaymentsRemaining;
@@ -460,20 +460,20 @@ export function calculateForgiveness(
 ): ForgivenessResult {
     const standard = calculateLoanPayment(loanBalance, 6.39, 10);
     const idr = calculateIDR(loanBalance, annualIncome, familySize, 'save', true);
-    
+
     const now = new Date();
     const standardPayoffDate = new Date(now);
     standardPayoffDate.setFullYear(standardPayoffDate.getFullYear() + 10);
-    
+
     const idrForgivenessDate = new Date(now);
     idrForgivenessDate.setFullYear(idrForgivenessDate.getFullYear() + idr.forgivenessYears);
-    
+
     const pslfForgivenessDate = new Date(now);
     pslfForgivenessDate.setFullYear(pslfForgivenessDate.getFullYear() + 10);
-    
+
     const idrTotalPaid = idr.monthlyPayment * idr.forgivenessYears * 12;
     const pslfTotalPaid = idr.monthlyPayment * 120;
-    
+
     let recommendedPath = "Standard 10-year repayment";
     if (isPublicService && idr.monthlyPayment < standard.monthlyPayment) {
         recommendedPath = "PSLF with SAVE Plan";
