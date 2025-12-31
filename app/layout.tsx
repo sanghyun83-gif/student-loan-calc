@@ -6,6 +6,7 @@ import { Analytics } from "@vercel/analytics/next";
 import { SITE } from "./site-config";
 
 const GA_MEASUREMENT_ID = "G-CLQYC4HRE3";
+const ADSENSE_ID = "ca-pub-6678501910155801";
 
 const geist = Geist({ subsets: ["latin"] });
 
@@ -52,6 +53,11 @@ export default function RootLayout({
             gtag('config', '${GA_MEASUREMENT_ID}');
           `}
         </Script>
+        <Script
+          src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_ID}`}
+          crossOrigin="anonymous"
+          strategy="afterInteractive"
+        />
         {children}
         <Analytics />
       </body>
